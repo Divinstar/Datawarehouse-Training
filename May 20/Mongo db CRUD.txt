@@ -1,0 +1,47 @@
+// 1. SWITCH TO DATABASE
+use facultydb
+
+// 2. INSERT PROFESSORS INTO COLLECTION
+db.professors.insertMany([
+  {
+    name: "Dr. john",
+    subject: "Mathematics",
+    experience: 10,
+    active: true
+  },
+  {
+    name: "Dr. Batman",
+    subject: "Physics",
+    experience: 5,
+    active: false
+  },
+  {
+    name: "Dr. Walter white",
+    subject: "Chemistry",
+    experience: 8,
+    active: true
+  }
+])
+
+// 3. FIND ALL PROFESSORS
+db.professors.find()
+
+// 4. FIND ONLY ACTIVE PROFESSORS
+db.professors.find({ active: true })
+
+// 5. UPDATE PHYSICS PROFESSOR'S EXPERIENCE TO 6 YEARS
+db.professors.updateOne(
+  { subject: "Physics" },
+  { $set: { experience: 6 } }
+)
+
+// 6. MARK PHYSICS PROFESSOR AS ACTIVE
+db.professors.updateOne(
+  { subject: "Physics" },
+  { $set: { active: true } }
+)
+
+// 7. DELETE PROFESSOR WHO TEACHES CHEMISTRY
+db.professors.deleteOne({ subject: "Chemistry" })
+
+
