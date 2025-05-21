@@ -1,0 +1,201 @@
+use campusdb
+switched to db campusdb
+db.enrollments.insertMany([ 
+  { 
+    name: "Ananya Verma", 
+    studentId: 101, 
+    courses: ["Python", "Java"], 
+    address: { city: "Delhi", state: "Delhi" }, 
+    feesPaid: true 
+  }, 
+  { 
+    name: "Rohan Mehta", 
+    studentId: 102, 
+    courses: ["Python", "AI"], 
+    address: { city: "Bangalore", state: "Karnataka" }, 
+    feesPaid: false 
+  }, 
+  { 
+    name: "Sneha Kapoor", 
+    studentId: 103, 
+    courses: [], 
+    address: { city: "Hyderabad", state: "Telangana" }, 
+    feesPaid: true 
+  }, 
+  { 
+    name: "Imran Shaikh", 
+    studentId: 104, 
+    courses: ["Data Science", "Java"], 
+    address: { city: "Delhi", state: "Delhi" }, 
+    feesPaid: false 
+  } 
+])
+
+
+
+  acknowledged: true,
+  insertedIds: {
+    '0': ObjectId('682d59096516febba5cb4539'),
+    '1': ObjectId('682d59096516febba5cb453a'),
+    '2': ObjectId('682d59096516febba5cb453b'),
+    '3': ObjectId('682d59096516febba5cb453c')
+  }
+}
+
+db.enrollments.find().pretty()
+{
+  _id: ObjectId('682d59096516febba5cb4539'),
+  name: 'Ananya Verma',
+  studentId: 101,
+  courses: [
+    'Python',
+    'Java'
+  ],
+  address: {
+    city: 'Delhi',
+    state: 'Delhi'
+  },
+  feesPaid: true
+}
+
+  _id: ObjectId('682d59096516febba5cb453a'),
+  name: 'Rohan Mehta',
+  studentId: 102,
+  courses: [
+    'Python',
+    'AI'
+  ],
+  address: {
+    city: 'Bangalore',
+    state: 'Karnataka'
+  },
+  feesPaid: false
+}
+{
+  _id: ObjectId('682d59096516febba5cb453b'),
+  name: 'Sneha Kapoor',
+  studentId: 103,
+  courses: [],
+  address: {
+    city: 'Hyderabad',
+    state: 'Telangana'
+  },
+  feesPaid: true
+}
+{
+  _id: ObjectId('682d59096516febba5cb453c'),
+  name: 'Imran Shaikh',
+  studentId: 104,
+  courses: [
+    'Data Science',
+    'Java'
+  ],
+  address: {
+    city: 'Delhi',
+    state: 'Delhi'
+  },
+  feesPaid: false
+}
+db.enrollments.find({ courses: "Python" })
+{
+  _id: ObjectId('682d59096516febba5cb4539'),
+  name: 'Ananya Verma',
+  studentId: 101,
+  courses: [
+    'Python',
+    'Java'
+  ],
+  address: {
+    city: 'Delhi',
+    state: 'Delhi'
+  },
+  feesPaid: true
+}
+{
+  _id: ObjectId('682d59096516febba5cb453a'),
+  name: 'Rohan Mehta',
+  studentId: 102,
+  courses: [
+    'Python',
+    'AI'
+  ],
+  address: {
+    city: 'Bangalore',
+    state: 'Karnataka'
+  },
+  feesPaid: false
+}
+db.enrollments.find({ 
+  "address.city": "Delhi", 
+  feesPaid: false 
+})
+
+{
+  _id: ObjectId('682d59096516febba5cb453c'),
+  name: 'Imran Shaikh',
+  studentId: 104,
+  courses: [
+    'Data Science',
+    'Java'
+  ],
+  address: {
+    city: 'Delhi',
+    state: 'Delhi'
+  },
+  feesPaid: false
+}
+
+db.enrollments.updateOne(
+  { studentId: 101 },
+  { $addToSet: { courses: "AI Fundamentals" } }
+)
+
+{
+  acknowledged: true,
+  insertedId: null,
+  matchedCount: 1,
+  modifiedCount: 1,
+  upsertedCount: 0
+}
+
+db.enrollments.updateOne(
+  { studentId: 102 },
+  { $set: { "address.city": "Mumbai" } }
+)
+
+
+  acknowledged: true,
+  insertedId: null,
+  matchedCount: 1,
+  modifiedCount: 1,
+  upsertedCount: 0
+}
+	
+db.enrollments.updateMany(
+  { "address.city": "Delhi" },
+  { $set: { feesPaid: true } }
+)
+
+
+  acknowledged: true,
+  insertedId: null,
+  matchedCount: 2,
+  modifiedCount: 1,
+  upsertedCount: 0
+}
+db.enrollments.updateMany(
+  { courses: "Java" },
+  { $pull: { courses: "Java" } }
+)
+
+{
+  acknowledged: true,
+  insertedId: null,
+  matchedCount: 2,
+  modifiedCount: 2,
+  upsertedCount: 0
+}
+{
+  acknowledged: true,
+  deletedCount: 1
+}
