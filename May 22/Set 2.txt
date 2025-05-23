@@ -1,0 +1,212 @@
+// =========================
+// SECTION 1: Document Modeling & Insertion
+// =========================
+use taskmanager
+
+// 2. Insert users
+db.users.insertMany([
+  {
+    name: "Alice",
+    email: "alice@example.com",
+    role: "admin",
+    active: true
+  },
+  {
+    name: "Bob",
+    email: "bob@example.com",
+    role: "manager",
+    active: true
+  },
+  {
+    name: "Charlie",
+    email: "charlie@example.com",
+    role: "developer",
+    active: false
+  }
+]);
+
+// 3. Insert projects with createdBy sub-document (referencing user)
+const alice = db.users.findOne({ name: "Alice" });
+const bob = db.users.findOne({ name: "Bob" });
+
+db.projects.insertMany([
+  {
+    title: "Website Redesign",
+    description: "Revamp UI/UX for the website",
+    startDate: new Date(),
+    status: "active",
+    createdBy: {
+      _id: alice._id,
+      name: alice.name
+    }
+  },
+  {
+    title: "API Development",
+    description: "Build the backend APIs",
+    startDate: new Date(),
+    status: "completed",
+    createdBy: {
+      _id: bob._id,
+      name: bob.name
+    }
+  }
+]);
+
+// 4. Insert tasks
+const project1 = db.projects.findOne({ title: "Website Redesign" });
+const project2 = db.projects.findOne({ title: "API Development" });
+
+db.tasks.insertMany([
+  {
+    title: "Design homepage",
+    assignedTo: alice._id,
+    projectId: project1._id,
+    priority: "high",
+    dueDate: new Date(new Date().setDate(new Date().getDate() + 7)),
+    status: "in progress"
+  },
+  {
+    title: "Implement auth API",
+    assignedTo: bob._id,
+    projectId: project2._id,
+    priority: "medium",
+    dueDate: new Date(new Date().setDate(new Date().getDate() + 5)),
+    status: "not started"
+  },
+  {
+    title: "Set up database",
+    assignedTo: charlie._id,
+    projectId: project2._id,
+    priority: "high",
+    dueDate: new Date(new Date().setDate(new Date().getDate() + 14)),
+    status: "not started"
+  },
+  {
+    title: "Create logo",
+    assignedTo: alice._id,
+    projectId: project1._id,
+    priority: "low",
+    dueDate: new Date(new Date().setDate(new Date().getDate() + 10)),
+    status: "completed"
+  },
+  {
+    title: "Test API",
+    assignedTo: charlie._id,
+    projectId: project2._id,
+    priority: "high",
+    dueDate: new Date(new Date().setDate(new Date().getDate() + 3)),
+    status: "in progress"
+  }
+]);
+
+// =========================
+// SECTION 2: Filtering & Querying
+// =========================
+db.tasks.find({ priority: "high", status: { $ne: "completed" } });
+
+db.users.find({ role: "developer", active: true });
+
+db.tasks.find({ assignedTo: charlie._id });
+
+db.projects.find({ startDate: { $gte: new Date(new Date().setDate(new Date().getDate() - 30)) } });
+
+
+// =========================
+// SECTION 3: Update Operations
+// =========================
+db.tasks.updateOne(
+  { title: "Test API" },
+  { $set: { status: "completed" } }
+);
+
+db.users.updateOne(
+  { name: "Bob" },
+  { $set: { role: "teamLead" } }
+);
+
+db.tasks.updateOne(
+  { title: "Design homepage" },
+  { $set: { tags: ["urgent", "frontend"] } }
+);
+
+
+// =========================
+// SECTION 4: Array and Subdocument Operations
+// =========================
+db.tasks.updateOne(
+  { title: "Design homepage" },
+  { $addToSet: { tags: "UI" } }
+);
+
+db.tasks.updateOne(
+  { title: "Design homepage" },
+  { $pull: { tags: "frontend" } }
+);
+
+db.projects.updateOne(
+  { title: "Website Redesign" },
+  { $inc: { progress: 10 } }
+);
+
+
+// =========================
+// SECTION 5: Aggregation & Lookup
+// =========================
+
+// 15. Join tasks with users
+db.tasks.aggregate([
+  {
+    $lookup: {
+      from: "users",
+      localField: "assignedTo",
+      foreignField: "_id",
+      as: "assignee"
+    }
+  },
+  { $unwind: "$assignee" },
+  {
+    $project: {
+      _id: 0,
+      title: 1,
+      assigneeName: "$assignee.name"
+    }
+  }
+]);
+
+// 16. Join tasks with projects and filter active
+db.tasks.aggregate([
+  {
+    $lookup: {
+      from: "projects",
+      localField: "projectId",
+      foreignField: "_id",
+      as: "project"
+    }
+  },
+  { $unwind: "$project" },
+  { $match: { "project.status": "active" } }
+]);
+
+// 17. Count tasks per status
+db.tasks.aggregate([
+  {
+    $group: {
+      _id: "$status",
+      count: { $sum: 1 }
+    }
+  }
+]);
+
+// 18. Top 3 soonest due tasks
+db.tasks.aggregate([
+  { $match: { dueDate: { $ne: null } } },
+  { $sort: { dueDate: 1 } },
+  { $limit: 3 },
+  {
+    $project: {
+      _id: 0,
+      title: 1,
+      dueDate: 1
+    }
+  }
+]);

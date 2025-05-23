@@ -1,0 +1,154 @@
+// =========================
+// SECTION 1: Schemas & Data Types
+// =========================
+use trainingdb
+
+db.employees.insertMany([
+  {
+    name: "Alice",
+    age: 30,
+    isManager: true,
+    skills: ["JavaScript", "MongoDB", "Node.js"],
+    joiningDate: new Date("2023-01-10"),
+    profile: {
+      linkedin: "https://linkedin.com/in/alice",
+      portfolio: "https://alice.dev"
+    }
+  },
+  {
+    name: "Bob",
+    age: 25,
+    isManager: false,
+    skills: ["Python"],
+    joiningDate: new Date("2022-09-15"),
+    profile: {
+      linkedin: "https://linkedin.com/in/bob",
+      portfolio: "https://bob.dev"
+    }
+  },
+  {
+    name: "Charlie",
+    age: 28,
+    isManager: false,
+    skills: ["C#", "Azure", "SQL", "Docker"],
+    joiningDate: new Date("2024-02-20"),
+    profile: {
+      linkedin: "https://linkedin.com/in/charlie",
+      portfolio: "https://charlie.dev"
+    }
+  },
+  {
+    name: "Diana",
+    age: 35,
+    isManager: true,
+    skills: ["Project Management", "Agile"],
+    joiningDate: new Date("2023-05-01"),
+    profile: {
+      linkedin: "https://linkedin.com/in/diana",
+      portfolio: "https://diana.dev"
+    }
+  }
+]);
+
+db.employees.find({ "skills.2": { $exists: true } });
+db.employees.find({ joiningDate: { $gt: new Date("2023-01-01") } });
+
+db.employees.updateOne({ name: "Alice" }, { $set: { rating: 4.5 } });
+
+db.employees.find({ rating: { $type: "double" } });
+
+db.employees.find({}, { _id: 0, name: 1, skills: 1 });
+
+
+// =========================
+// SECTION 2: One-to-One (Embedded)
+// =========================
+use schooldb
+
+db.students.insertMany([
+  { name: "John", guardian: { name: "Mary", phone: "1234567890", relation: "Mother" } },
+  { name: "Anya", guardian: { name: "Raj", phone: "9876543210", relation: "Father" } },
+  { name: "Liam", guardian: { name: "Linda", phone: "5556667777", relation: "Aunt" } }
+]);
+
+db.students.find({ "guardian.relation": "Mother" });
+
+db.students.updateOne(
+  { name: "John" },
+  { $set: { "guardian.phone": "9998887777" } }
+);
+
+
+// =========================
+// SECTION 3: One-to-Many (Embedded)
+// =========================
+use schooldb
+
+db.teachers.insertMany([
+  { name: "Mr. White", classes: ["Math", "Physics"] },
+  { name: "Ms. Green", classes: ["Biology", "Chemistry"] },
+  { name: "Mr. Black", classes: ["Physics", "Computer Science"] }
+]);
+
+db.teachers.find({ classes: "Physics" });
+
+db.teachers.updateOne(
+  { name: "Mr. White" },
+  { $addToSet: { classes: "Robotics" } }
+);
+
+db.teachers.updateOne(
+  { name: "Mr. White" },
+  { $pull: { classes: "Math" } }
+);
+
+
+// =========================
+// SECTION 4: One-to-Many (Referenced)
+// =========================
+use academia
+
+db.courses.insertMany([
+  { _id: ObjectId("6650051a1aefb14e5a000001"), title: "Machine Learning", credits: 4 },
+  { _id: ObjectId("6650051a1aefb14e5a000002"), title: "Databases", credits: 3 }
+]);
+
+db.students.insertMany([
+  { name: "Alice", enrolledCourse: ObjectId("6650051a1aefb14e5a000001") },
+  { name: "Bob", enrolledCourse: ObjectId("6650051a1aefb14e5a000002") }
+]);
+
+db.students.find({ enrolledCourse: ObjectId("6650051a1aefb14e5a000001") });
+
+db.courses.find({ _id: ObjectId("6650051a1aefb14e5a000001") });
+
+
+// =========================
+// SECTION 5: $lookup (Join)
+// =========================
+use academia
+
+db.students.aggregate([
+  {
+    $lookup: {
+      from: "courses",
+      localField: "enrolledCourse",
+      foreignField: "_id",
+      as: "courseInfo"
+    }
+  },
+  { $unwind: "$courseInfo" },
+  {
+    $project: {
+      _id: 0,
+      name: 1,
+      courseTitle: "$courseInfo.title"
+    }
+  },
+  {
+    $match: {
+      courseTitle: "Machine Learning"
+    }
+  }
+]);
+1x1
