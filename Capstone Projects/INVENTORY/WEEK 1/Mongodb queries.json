@@ -1,0 +1,26 @@
+-- MONGODB FOR AUDIT LOGS
+--storing logs
+{
+  "product_id": 1,
+  "warehouse_id": 2,
+  "adjusted_by": "admin",
+  "adjustment_type": "manual",
+  "reason": "damaged item removed",
+  "timestamp": ISODate("2025-06-02T10:00:00Z")
+}
+
+
+--insert sample data
+db.audit_logs.insertOne({
+  product_id: 1,
+  warehouse_id: 2,
+  adjusted_by: "admin",
+  adjustment_type: "manual",
+  reason: "damaged item removed",
+  timestamp: new Date()
+});
+
+
+--create inex
+db.audit_logs.createIndex({ product_id: 1 });
+
