@@ -1,0 +1,8 @@
+OrderID,CustomerID,Product,Category,Quantity,Price,OrderDate
+1,101,Laptop,Electronics,2,50000,10-01-2024
+2,101,Mouse,Electronics,1,1200,15-01-2024
+3,102,Tablet,Electronics,1,20000,01-02-2024
+4,103,Bookshelf,Furniture,1,3500,10-02-2024
+5,104,Mixer,Appliances,1,5000,15-02-2024
+6,105,Notebook,Stationery,5,500,01-03-2024
+7,102,Phone,Electronics,1,30000,02-03-2024
