@@ -1,0 +1,415 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "provenance": []
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "code",
+      "execution_count": 1,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "g71JMH44bZao",
+        "outputId": "de0f7367-a72d-4fc1-d09a-7bee2a1da15f"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "+------+--------+-------------------+--------+-------+-------+\n",
+            "|UserID|Page    |Timestamp          |Duration|Device |Country|\n",
+            "+------+--------+-------------------+--------+-------+-------+\n",
+            "|1     |Home    |2024-04-10 10:00:00|35      |Mobile |India  |\n",
+            "|2     |Products|2024-04-10 10:02:00|120     |Desktop|USA    |\n",
+            "|3     |Cart    |2024-04-10 10:05:00|45      |Tablet |UK     |\n",
+            "|1     |Checkout|2024-04-10 10:08:00|60      |Mobile |India  |\n",
+            "|4     |Home    |2024-04-10 10:10:00|15      |Mobile |Canada |\n",
+            "|2     |Contact |2024-04-10 10:15:00|25      |Desktop|USA    |\n",
+            "|5     |Products|2024-04-10 10:20:00|90      |Desktop|India  |\n",
+            "+------+--------+-------------------+--------+-------+-------+\n",
+            "\n"
+          ]
+        }
+      ],
+      "source": [
+        "from pyspark.sql import SparkSession\n",
+        "from datetime import datetime\n",
+        "from pyspark.sql import Row\n",
+        "\n",
+        "spark = SparkSession.builder \\\n",
+        "    .appName(\"Web Traffic Analysis\") \\\n",
+        "    .getOrCreate()\n",
+        "spark\n",
+        "\n",
+        "web_data = [\n",
+        "Row(UserID=1, Page=\"Home\", Timestamp=\"2024-04-10 10:00:00\", Duration=35,\n",
+        "Device=\"Mobile\", Country=\"India\"),\n",
+        "Row(UserID=2, Page=\"Products\", Timestamp=\"2024-04-10 10:02:00\", Duration=120,\n",
+        "Device=\"Desktop\", Country=\"USA\"),\n",
+        "Row(UserID=3, Page=\"Cart\", Timestamp=\"2024-04-10 10:05:00\", Duration=45,\n",
+        "Device=\"Tablet\", Country=\"UK\"),\n",
+        "Row(UserID=1, Page=\"Checkout\", Timestamp=\"2024-04-10 10:08:00\", Duration=60,\n",
+        "Device=\"Mobile\", Country=\"India\"),\n",
+        "Row(UserID=4, Page=\"Home\", Timestamp=\"2024-04-10 10:10:00\", Duration=15,\n",
+        "Device=\"Mobile\", Country=\"Canada\"),\n",
+        "Row(UserID=2, Page=\"Contact\", Timestamp=\"2024-04-10 10:15:00\", Duration=25,\n",
+        "Device=\"Desktop\", Country=\"USA\"),\n",
+        "Row(UserID=5, Page=\"Products\", Timestamp=\"2024-04-10 10:20:00\", Duration=90,\n",
+        "Device=\"Desktop\", Country=\"India\"),\n",
+        "]\n",
+        "df_web = spark.createDataFrame(web_data)\n",
+        "df_web.show(truncate=False)"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "# **Data Exploration & Preparation**"
+      ],
+      "metadata": {
+        "id": "B_0R0o24dtkW"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "#1. Display the schema\n",
+        "df_web.printSchema()\n",
+        "\n",
+        "#2. Convert Timestamp column\n",
+        "from pyspark.sql import Row\n",
+        "from pyspark.sql.functions import col, to_timestamp, minute\n",
+        "df_web = df_web.withColumn(\"Timestamp\", to_timestamp(col(\"Timestamp\")))\n",
+        "df_web.printSchema()\n",
+        "\n",
+        "#3. Add SessionMinute column\n",
+        "df_web = df_web.withColumn(\"SessionMinute\", minute(col(\"Timestamp\")))\n",
+        "df_web.show()"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "cuEkTvPLdu6s",
+        "outputId": "b44a71e8-3897-4d93-c780-95212d8bcc80"
+      },
+      "execution_count": 4,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "root\n",
+            " |-- UserID: long (nullable = true)\n",
+            " |-- Page: string (nullable = true)\n",
+            " |-- Timestamp: timestamp (nullable = true)\n",
+            " |-- Duration: long (nullable = true)\n",
+            " |-- Device: string (nullable = true)\n",
+            " |-- Country: string (nullable = true)\n",
+            "\n",
+            "root\n",
+            " |-- UserID: long (nullable = true)\n",
+            " |-- Page: string (nullable = true)\n",
+            " |-- Timestamp: timestamp (nullable = true)\n",
+            " |-- Duration: long (nullable = true)\n",
+            " |-- Device: string (nullable = true)\n",
+            " |-- Country: string (nullable = true)\n",
+            "\n",
+            "+------+--------+-------------------+--------+-------+-------+-------------+\n",
+            "|UserID|    Page|          Timestamp|Duration| Device|Country|SessionMinute|\n",
+            "+------+--------+-------------------+--------+-------+-------+-------------+\n",
+            "|     1|    Home|2024-04-10 10:00:00|      35| Mobile|  India|            0|\n",
+            "|     2|Products|2024-04-10 10:02:00|     120|Desktop|    USA|            2|\n",
+            "|     3|    Cart|2024-04-10 10:05:00|      45| Tablet|     UK|            5|\n",
+            "|     1|Checkout|2024-04-10 10:08:00|      60| Mobile|  India|            8|\n",
+            "|     4|    Home|2024-04-10 10:10:00|      15| Mobile| Canada|           10|\n",
+            "|     2| Contact|2024-04-10 10:15:00|      25|Desktop|    USA|           15|\n",
+            "|     5|Products|2024-04-10 10:20:00|      90|Desktop|  India|           20|\n",
+            "+------+--------+-------------------+--------+-------+-------+-------------+\n",
+            "\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "# **Filtering and Conditions**"
+      ],
+      "metadata": {
+        "id": "hm1z8K5yeFng"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "#4. Mobile users who visited Checkout\n",
+        "mobile_checkout = df_web.filter((col(\"Device\") == \"Mobile\") & (col(\"Page\") == \"Checkout\"))\n",
+        "mobile_checkout.show()\n",
+        "\n",
+        "#5. Entries with Duration > 60 seconds\n",
+        "long_sessions = df_web.filter(col(\"Duration\") > 60)\n",
+        "long_sessions.show()\n",
+        "\n",
+        "#6. Indian users who visited Products page\n",
+        "india_products = df_web.filter((col(\"Country\") == \"India\") & (col(\"Page\") == \"Products\"))\n",
+        "india_products.show()"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "xeYKnXYVeUwj",
+        "outputId": "3252724c-ac75-4592-f098-687c37195b6d"
+      },
+      "execution_count": 5,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "+------+--------+-------------------+--------+------+-------+-------------+\n",
+            "|UserID|    Page|          Timestamp|Duration|Device|Country|SessionMinute|\n",
+            "+------+--------+-------------------+--------+------+-------+-------------+\n",
+            "|     1|Checkout|2024-04-10 10:08:00|      60|Mobile|  India|            8|\n",
+            "+------+--------+-------------------+--------+------+-------+-------------+\n",
+            "\n",
+            "+------+--------+-------------------+--------+-------+-------+-------------+\n",
+            "|UserID|    Page|          Timestamp|Duration| Device|Country|SessionMinute|\n",
+            "+------+--------+-------------------+--------+-------+-------+-------------+\n",
+            "|     2|Products|2024-04-10 10:02:00|     120|Desktop|    USA|            2|\n",
+            "|     5|Products|2024-04-10 10:20:00|      90|Desktop|  India|           20|\n",
+            "+------+--------+-------------------+--------+-------+-------+-------------+\n",
+            "\n",
+            "+------+--------+-------------------+--------+-------+-------+-------------+\n",
+            "|UserID|    Page|          Timestamp|Duration| Device|Country|SessionMinute|\n",
+            "+------+--------+-------------------+--------+-------+-------+-------------+\n",
+            "|     5|Products|2024-04-10 10:20:00|      90|Desktop|  India|           20|\n",
+            "+------+--------+-------------------+--------+-------+-------+-------------+\n",
+            "\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "# **Aggregation and Grouping**"
+      ],
+      "metadata": {
+        "id": "k5QDjImCefJs"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from pyspark.sql.functions import avg, count, desc\n",
+        "#7. Average duration per device type\n",
+        "avg_duration = df_web.groupBy(\"Device\").agg(avg(\"Duration\").alias(\"AvgDuration\"))\n",
+        "avg_duration.show()\n",
+        "\n",
+        "#8. Sessions count per country\n",
+        "sessions_per_country = df_web.groupBy(\"Country\").agg(count(\"*\").alias(\"SessionCount\"))\n",
+        "sessions_per_country.show()\n",
+        "\n",
+        "#9. Most visited page overall\n",
+        "most_visited = df_web.groupBy(\"Page\").agg(count(\"*\").alias(\"VisitCount\")) \\\n",
+        "    .orderBy(desc(\"VisitCount\")).limit(1)\n",
+        "most_visited.show()"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "MnQxDY9eeh3f",
+        "outputId": "d5b7e0ec-96a3-46cc-99b4-d77c1ba8c2e7"
+      },
+      "execution_count": 6,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "+-------+------------------+\n",
+            "| Device|       AvgDuration|\n",
+            "+-------+------------------+\n",
+            "| Mobile|36.666666666666664|\n",
+            "| Tablet|              45.0|\n",
+            "|Desktop| 78.33333333333333|\n",
+            "+-------+------------------+\n",
+            "\n",
+            "+-------+------------+\n",
+            "|Country|SessionCount|\n",
+            "+-------+------------+\n",
+            "|  India|           3|\n",
+            "|    USA|           2|\n",
+            "|     UK|           1|\n",
+            "| Canada|           1|\n",
+            "+-------+------------+\n",
+            "\n",
+            "+----+----------+\n",
+            "|Page|VisitCount|\n",
+            "+----+----------+\n",
+            "|Home|         2|\n",
+            "+----+----------+\n",
+            "\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "# **Window Functions**"
+      ],
+      "metadata": {
+        "id": "eYaXaYeJe2s6"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from pyspark.sql.window import Window\n",
+        "from pyspark.sql.functions import row_number,sum\n",
+        "#10. Rank each user’s pages by timestamp (oldest to newest).\n",
+        "window_spec = Window.partitionBy(\"UserID\").orderBy(\"Timestamp\")\n",
+        "ranked_pages = df_web.withColumn(\"PageRank\", row_number().over(window_spec))\n",
+        "ranked_pages.show()\n",
+        "\n",
+        "#11. Find the total duration of all sessions per user using groupBy .\n",
+        "user_duration = df_web.groupBy(\"UserID\").agg(sum(\"Duration\").alias(\"TotalDuration\"))\n",
+        "user_duration.show()"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "zbMsdIuge7Yb",
+        "outputId": "dfe33482-6eb8-451d-dd3e-632dc7c1c416"
+      },
+      "execution_count": 8,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "+------+--------+-------------------+--------+-------+-------+-------------+--------+\n",
+            "|UserID|    Page|          Timestamp|Duration| Device|Country|SessionMinute|PageRank|\n",
+            "+------+--------+-------------------+--------+-------+-------+-------------+--------+\n",
+            "|     1|    Home|2024-04-10 10:00:00|      35| Mobile|  India|            0|       1|\n",
+            "|     1|Checkout|2024-04-10 10:08:00|      60| Mobile|  India|            8|       2|\n",
+            "|     2|Products|2024-04-10 10:02:00|     120|Desktop|    USA|            2|       1|\n",
+            "|     2| Contact|2024-04-10 10:15:00|      25|Desktop|    USA|           15|       2|\n",
+            "|     3|    Cart|2024-04-10 10:05:00|      45| Tablet|     UK|            5|       1|\n",
+            "|     4|    Home|2024-04-10 10:10:00|      15| Mobile| Canada|           10|       1|\n",
+            "|     5|Products|2024-04-10 10:20:00|      90|Desktop|  India|           20|       1|\n",
+            "+------+--------+-------------------+--------+-------+-------+-------------+--------+\n",
+            "\n",
+            "+------+-------------+\n",
+            "|UserID|TotalDuration|\n",
+            "+------+-------------+\n",
+            "|     1|           95|\n",
+            "|     3|           45|\n",
+            "|     2|          145|\n",
+            "|     5|           90|\n",
+            "|     4|           15|\n",
+            "+------+-------------+\n",
+            "\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "# **Spark SQL Tasks**"
+      ],
+      "metadata": {
+        "id": "dpFmMNEFfM1m"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "#12. Create temporary view\n",
+        "df_web.createOrReplaceTempView(\"traffic_view\")\n",
+        "\n",
+        "#13. Top 2 longest sessions\n",
+        "spark.sql(\"select * from traffic_view order by Duration desc limit 2\").show()\n",
+        "\n",
+        "#14. Unique users per page\n",
+        "spark.sql(\"select Page, count(DISTINCT UserID) as UniqueUsers from traffic_view group by Page\").show()"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "mw26tkTvfTJ6",
+        "outputId": "f0636f09-6d92-42ec-8f27-185bb9028c51"
+      },
+      "execution_count": 9,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "+------+--------+-------------------+--------+-------+-------+-------------+\n",
+            "|UserID|    Page|          Timestamp|Duration| Device|Country|SessionMinute|\n",
+            "+------+--------+-------------------+--------+-------+-------+-------------+\n",
+            "|     2|Products|2024-04-10 10:02:00|     120|Desktop|    USA|            2|\n",
+            "|     5|Products|2024-04-10 10:20:00|      90|Desktop|  India|           20|\n",
+            "+------+--------+-------------------+--------+-------+-------+-------------+\n",
+            "\n",
+            "+--------+-----------+\n",
+            "|    Page|UniqueUsers|\n",
+            "+--------+-----------+\n",
+            "|    Cart|          1|\n",
+            "|    Home|          2|\n",
+            "|Checkout|          1|\n",
+            "|Products|          2|\n",
+            "| Contact|          1|\n",
+            "+--------+-----------+\n",
+            "\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "**Export & Save**"
+      ],
+      "metadata": {
+        "id": "oy718PxYfyW3"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "#15. Save the final DataFrame to CSV.\n",
+        "df_web.write.csv(\"web_traffic_data.csv\", header=True)\n",
+        "\n",
+        "#16. Save partitioned by Country in Parquet format.\n",
+        "df_web.write.partitionBy(\"Country\").parquet(\"web_traffic_partitioned.parquet\")"
+      ],
+      "metadata": {
+        "id": "VASVSQQZfzac"
+      },
+      "execution_count": 10,
+      "outputs": []
+    }
+  ]
+}
