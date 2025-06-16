@@ -1,0 +1,473 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "provenance": []
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "code",
+      "execution_count": 1,
+      "metadata": {
+        "id": "7j5vJHXz8f4h"
+      },
+      "outputs": [],
+      "source": [
+        "from pyspark.sql import SparkSession\n",
+        "\n",
+        "spark = SparkSession.builder \\\n",
+        "    .appName(\"CourseEnrollment\") \\\n",
+        "    .getOrCreate()\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Data Loading"
+      ],
+      "metadata": {
+        "id": "9YLX4RXI-Ira"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "df = spark.read.option(\"header\", True).option(\"inferSchema\", True).csv(\"course_enrollments.csv\")\n",
+        "df2 = spark.read.option(\"header\", True).option(\"inferSchema\", True).csv(\"course_details.csv\")\n"
+      ],
+      "metadata": {
+        "id": "SW7JLUKr9nXY"
+      },
+      "execution_count": 2,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "df.printSchema()\n",
+        "df.show()"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "Dp4tpI1d9nk0",
+        "outputId": "54cf7a0a-7806-43cd-d013-ec49290703f7"
+      },
+      "execution_count": 3,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "root\n",
+            " |-- EnrollmentID: string (nullable = true)\n",
+            " |-- StudentName: string (nullable = true)\n",
+            " |-- CourseName: string (nullable = true)\n",
+            " |-- Category: string (nullable = true)\n",
+            " |-- EnrollDate: date (nullable = true)\n",
+            " |-- ProgressPercent: integer (nullable = true)\n",
+            " |-- Rating: double (nullable = true)\n",
+            " |-- Status: string (nullable = true)\n",
+            "\n",
+            "+------------+-----------+--------------------+-----------+----------+---------------+------+---------+\n",
+            "|EnrollmentID|StudentName|          CourseName|   Category|EnrollDate|ProgressPercent|Rating|   Status|\n",
+            "+------------+-----------+--------------------+-----------+----------+---------------+------+---------+\n",
+            "|      ENR001|     Aditya|Python for Beginners|Programming|2024-05-10|             80|   4.5|   Active|\n",
+            "|      ENR002|     Simran|Data Analysis wit...|  Analytics|2024-05-12|            100|   4.7|Completed|\n",
+            "|      ENR003|     Aakash| Power BI Essentials|  Analytics|2024-05-13|             30|   3.8|   Active|\n",
+            "|      ENR004|       Neha|         Java Basics|Programming|2024-05-15|              0|  NULL| Inactive|\n",
+            "|      ENR005|       Zara|Machine Learning 101|         AI|2024-05-17|             60|   4.2|   Active|\n",
+            "|      ENR006|    Ibrahim|Python for Beginners|Programming|2024-05-18|             90|   4.6|Completed|\n",
+            "+------------+-----------+--------------------+-----------+----------+---------------+------+---------+\n",
+            "\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from pyspark.sql.types import StructType, StructField, StringType, IntegerType, DoubleType, DateType\n",
+        "\n",
+        "manual_schema = StructType([\n",
+        "    StructField(\"EnrollmentID\", StringType(), True),\n",
+        "    StructField(\"StudentName\", StringType(), True),\n",
+        "    StructField(\"CourseName\", StringType(), True),\n",
+        "    StructField(\"Category\", StringType(), True),\n",
+        "    StructField(\"EnrollDate\", DateType(), True),\n",
+        "    StructField(\"ProgressPercent\", IntegerType(), True),\n",
+        "    StructField(\"Rating\", DoubleType(), True),\n",
+        "    StructField(\"Status\", StringType(), True),\n",
+        "])\n",
+        "\n",
+        "df_manual = spark.read.option(\"header\", True).schema(manual_schema).csv(\"course_enrollments.csv\")\n",
+        "df_manual.printSchema()\n",
+        "df_manual.show()\n"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "ntLUxkn79-Aj",
+        "outputId": "984ddc12-2b63-4be7-8d0c-7796e50c7594"
+      },
+      "execution_count": 4,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "root\n",
+            " |-- EnrollmentID: string (nullable = true)\n",
+            " |-- StudentName: string (nullable = true)\n",
+            " |-- CourseName: string (nullable = true)\n",
+            " |-- Category: string (nullable = true)\n",
+            " |-- EnrollDate: date (nullable = true)\n",
+            " |-- ProgressPercent: integer (nullable = true)\n",
+            " |-- Rating: double (nullable = true)\n",
+            " |-- Status: string (nullable = true)\n",
+            "\n",
+            "+------------+-----------+--------------------+-----------+----------+---------------+------+---------+\n",
+            "|EnrollmentID|StudentName|          CourseName|   Category|EnrollDate|ProgressPercent|Rating|   Status|\n",
+            "+------------+-----------+--------------------+-----------+----------+---------------+------+---------+\n",
+            "|      ENR001|     Aditya|Python for Beginners|Programming|2024-05-10|             80|   4.5|   Active|\n",
+            "|      ENR002|     Simran|Data Analysis wit...|  Analytics|2024-05-12|            100|   4.7|Completed|\n",
+            "|      ENR003|     Aakash| Power BI Essentials|  Analytics|2024-05-13|             30|   3.8|   Active|\n",
+            "|      ENR004|       Neha|         Java Basics|Programming|2024-05-15|              0|  NULL| Inactive|\n",
+            "|      ENR005|       Zara|Machine Learning 101|         AI|2024-05-17|             60|   4.2|   Active|\n",
+            "|      ENR006|    Ibrahim|Python for Beginners|Programming|2024-05-18|             90|   4.6|Completed|\n",
+            "+------------+-----------+--------------------+-----------+----------+---------------+------+---------+\n",
+            "\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Filtering and Transformation"
+      ],
+      "metadata": {
+        "id": "JHCMWEn7-J84"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from pyspark.sql.functions import *\n",
+        "df_filtered = df.filter(col(\"ProgressPercent\") < 50)"
+      ],
+      "metadata": {
+        "id": "fKeM9oaW99yb"
+      },
+      "execution_count": 7,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "avg_rating = df.select(avg(\"Rating\")).first()[0]\n",
+        "df_filled = df.withColumn(\"Rating\", when(col(\"Rating\").isNull(), avg_rating).otherwise(col(\"Rating\")))"
+      ],
+      "metadata": {
+        "id": "b1qWADf4-bZX"
+      },
+      "execution_count": 8,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "df_status = df_filled.withColumn(\"IsActive\", when(col(\"Status\") == \"Active\", 1).otherwise(0))"
+      ],
+      "metadata": {
+        "id": "ZT3egExJ-bcm"
+      },
+      "execution_count": 9,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Aggregations & Metrics"
+      ],
+      "metadata": {
+        "id": "g2JR7vJX-lP1"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "df_status.groupBy(\"CourseName\").agg(avg(\"ProgressPercent\").alias(\"AvgProgress\")).show()"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "6vXN2oex-bft",
+        "outputId": "d8c26f7c-fd18-46bb-cd7e-ef8d057dd7b9"
+      },
+      "execution_count": 11,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "+--------------------+-----------+\n",
+            "|          CourseName|AvgProgress|\n",
+            "+--------------------+-----------+\n",
+            "|Data Analysis wit...|      100.0|\n",
+            "|         Java Basics|        0.0|\n",
+            "|Machine Learning 101|       60.0|\n",
+            "|Python for Beginners|       85.0|\n",
+            "| Power BI Essentials|       30.0|\n",
+            "+--------------------+-----------+\n",
+            "\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "df_status.groupBy(\"Category\").count().withColumnRenamed(\"count\", \"StudentCount\").show()"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "TqMBIAmV-bil",
+        "outputId": "209d7e5e-57ad-41f4-e308-a9bc6d2e9a4e"
+      },
+      "execution_count": 12,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "+-----------+------------+\n",
+            "|   Category|StudentCount|\n",
+            "+-----------+------------+\n",
+            "|Programming|           3|\n",
+            "|         AI|           1|\n",
+            "|  Analytics|           2|\n",
+            "+-----------+------------+\n",
+            "\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "df_status.groupBy(\"CourseName\").agg(count(\"*\").alias(\"Enrollments\")).orderBy(col(\"Enrollments\").desc()).show(1)"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "rJxxk9Rv-bl4",
+        "outputId": "9bf6b268-dc35-46e2-f5ab-186ec2c9f5e1"
+      },
+      "execution_count": 14,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "+--------------------+-----------+\n",
+            "|          CourseName|Enrollments|\n",
+            "+--------------------+-----------+\n",
+            "|Python for Beginners|          2|\n",
+            "+--------------------+-----------+\n",
+            "only showing top 1 row\n",
+            "\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Joins"
+      ],
+      "metadata": {
+        "id": "L915_LRA-245"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "df_joined = df_status.join(df2, on=\"CourseName\", how=\"left\")"
+      ],
+      "metadata": {
+        "id": "dDVzDRZZ-boi"
+      },
+      "execution_count": 15,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "df_joined.show()"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "AKlsqSD9-bsA",
+        "outputId": "0b0c1b52-1add-4783-c077-7caeb16b13ff"
+      },
+      "execution_count": 16,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "+--------------------+------------+-----------+-----------+----------+---------------+-----------------+---------+--------+-------------+----------+\n",
+            "|          CourseName|EnrollmentID|StudentName|   Category|EnrollDate|ProgressPercent|           Rating|   Status|IsActive|DurationWeeks|Instructor|\n",
+            "+--------------------+------------+-----------+-----------+----------+---------------+-----------------+---------+--------+-------------+----------+\n",
+            "|Python for Beginners|      ENR001|     Aditya|Programming|2024-05-10|             80|              4.5|   Active|       1|            4|    Rakesh|\n",
+            "|Data Analysis wit...|      ENR002|     Simran|  Analytics|2024-05-12|            100|              4.7|Completed|       0|            3|    Anjali|\n",
+            "| Power BI Essentials|      ENR003|     Aakash|  Analytics|2024-05-13|             30|              3.8|   Active|       1|            5|     Rekha|\n",
+            "|         Java Basics|      ENR004|       Neha|Programming|2024-05-15|              0|4.359999999999999| Inactive|       0|            6|     Manoj|\n",
+            "|Machine Learning 101|      ENR005|       Zara|         AI|2024-05-17|             60|              4.2|   Active|       1|            8|     Samir|\n",
+            "|Python for Beginners|      ENR006|    Ibrahim|Programming|2024-05-18|             90|              4.6|Completed|       0|            4|    Rakesh|\n",
+            "+--------------------+------------+-----------+-----------+----------+---------------+-----------------+---------+--------+-------------+----------+\n",
+            "\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Window Functions"
+      ],
+      "metadata": {
+        "id": "2h-_bNfz_BSq"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from pyspark.sql.window import Window\n",
+        "window_spec = Window.partitionBy(\"CourseName\").orderBy(col(\"ProgressPercent\").desc())\n",
+        "df_ranked = df_joined.withColumn(\"Rank\", rank().over(window_spec))"
+      ],
+      "metadata": {
+        "id": "qEyBI7Ym-_fc"
+      },
+      "execution_count": 17,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "window_cat = Window.partitionBy(\"Category\").orderBy(\"EnrollDate\")\n",
+        "df_leadlag = df_ranked.withColumn(\"NextDate\", lead(\"EnrollDate\").over(window_cat)) \\\n",
+        "                      .withColumn(\"PrevDate\", lag(\"EnrollDate\").over(window_cat))\n"
+      ],
+      "metadata": {
+        "id": "qODRXe_d-_i6"
+      },
+      "execution_count": 18,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Pivoting & Formatting"
+      ],
+      "metadata": {
+        "id": "74S4UAqV_J6r"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "df_pivot = df_joined.groupBy(\"Category\").pivot(\"Status\").count()"
+      ],
+      "metadata": {
+        "id": "dgYHGKQf-_qU"
+      },
+      "execution_count": 19,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "df_dates = df_joined.withColumn(\"EnrollYear\", year(\"EnrollDate\")) \\\n",
+        "                    .withColumn(\"EnrollMonth\", month(\"EnrollDate\"))"
+      ],
+      "metadata": {
+        "id": "7G_wmG9I-_tD"
+      },
+      "execution_count": 20,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Cleaning and Deduplication"
+      ],
+      "metadata": {
+        "id": "KvXqpxY6_UIO"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "df_clean = df_dates.filter((col(\"Status\").isNotNull()) & (col(\"Status\") != \"\"))"
+      ],
+      "metadata": {
+        "id": "ktCoaDnj-_wC"
+      },
+      "execution_count": 21,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "df_deduped = df_clean.dropDuplicates([\"EnrollmentID\"])"
+      ],
+      "metadata": {
+        "id": "ONQIBVG7-_zl"
+      },
+      "execution_count": 22,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Export"
+      ],
+      "metadata": {
+        "id": "X5Ui7lXK_aiV"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "df_deduped.write.mode(\"overwrite\").option(\"header\", True).csv(\"final_output_csv\")\n",
+        "df_deduped.write.mode(\"overwrite\").json(\"final_output_json\")\n",
+        "df_deduped.write.mode(\"overwrite\").option(\"compression\", \"snappy\").parquet(\"final_output_parquet\")"
+      ],
+      "metadata": {
+        "id": "jirUTeIT_dka"
+      },
+      "execution_count": 23,
+      "outputs": []
+    }
+  ]
+}
