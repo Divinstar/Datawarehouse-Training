@@ -1,0 +1,6 @@
+LogID,VehicleID,EntryPoint,ExitPoint,EntryTime,ExitTime,VehicleType,SpeedKMH,TollPaid,TripDurationMinutes,IsOverspeed,PreviousExit,IdleMinutes,TripType,TripDate
+L001,V001,GateA,GateC,2024-05-01 08:01:00,2024-05-01 08:20:00,Car,60,50,19.0,False,,,Medium,2024-05-01
+L002,V002,GateB,GateC,2024-05-01 08:10:00,2024-05-01 08:45:00,Truck,45,100,35.0,False,,,Long,2024-05-01
+L003,V003,GateA,GateD,2024-05-01 09:00:00,2024-05-01 09:18:00,Bike,55,30,18.0,False,,,Medium,2024-05-01
+L004,V004,GateC,GateD,2024-05-01 09:15:00,2024-05-01 09:35:00,Car,80,50,20.0,True,,,Medium,2024-05-01
+L005,V005,GateB,GateA,2024-05-01 10:05:00,2024-05-01 10:40:00,Bus,40,70,35.0,False,,,Long,2024-05-01
