@@ -1,0 +1,6 @@
+ItemID,ItemName,Category,Warehouse,StockQty,ReorderLevel,LastRestocked,UnitPrice,Supplier,RestockMonth,StockAge,StockAgeBucket
+I001,LED TV,Electronics,WarehouseA,70,20,2024-03-15,30000,AVTech,3,461,Stale
+I002,Laptop,Electronics,WarehouseB,30,15,2024-04-01,70000,TechWorld,4,444,Stale
+I003,Office Chair,Furniture,WarehouseA,40,10,2024-03-25,6000,ChairCo,3,451,Stale
+I004,Refrigerator,Appliances,WarehouseC,5,10,2024-02-20,25000,FreezeIt,2,485,Stale
+I005,Printer,Electronics,WarehouseB,8,5,2024-03-30,8000,PrintFast,3,446,Stale
