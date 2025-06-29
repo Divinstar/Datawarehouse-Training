@@ -1,0 +1,4 @@
+warehouse_id,warehouse_name,location
+101,Main Warehouse,Bangalore
+102,Backup Warehouse,Chennai
+103,North Hub,Delhi

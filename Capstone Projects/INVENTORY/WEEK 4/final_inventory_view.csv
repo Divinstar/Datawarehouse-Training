@@ -1,0 +1,4 @@
+product_id,product_name,warehouse_id,warehouse_name,total_stock,reorder_level,needs_reorder
+1,Keyboard,101,Main Warehouse,90,10,False
+2,Mouse,102,Backup Warehouse,2,5,True
+3,Monitor,103,North Hub,1,3,True
