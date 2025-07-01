@@ -1,0 +1,29 @@
+trigger: none
+
+schedules:
+  - cron: "0 6 * * *"
+    displayName: Daily Inventory Check
+    branches:
+      include:
+        - main
+    always: true
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.x'
+    displayName: 'Set up Python'
+
+  - script: |
+      pip install pandas
+      python check_stock.py
+    displayName: 'Run Daily Stock Checker'
+
+  - task: PublishBuildArtifacts@1
+    inputs:
+      pathToPublish: 'reorder_list.csv'
+      artifactName: 'DailyReorderReport'
+      publishLocation: 'Container'
